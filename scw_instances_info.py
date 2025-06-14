@@ -2,18 +2,33 @@
 
 import subprocess
 import json
+import os
 from typing import Dict, List
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def run_scw_command(command: List[str]) -> Dict:
     """
     Execute a Scaleway CLI command and return the JSON output
     """
+    # Add environment variables to the command
+    env = os.environ.copy()
+    env.update({
+        'SCW_ACCESS_KEY': os.getenv('SCW_ACCESS_KEY'),
+        'SCW_SECRET_KEY': os.getenv('SCW_SECRET_KEY'),
+        'SCW_DEFAULT_PROJECT_ID': os.getenv('SCW_DEFAULT_PROJECT_ID'),
+        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_REGION')
+    })
+
     try:
         result = subprocess.run(
             command,
             capture_output=True,
             text=True,
-            check=True
+            check=True,
+            env=env
         )
         return json.loads(result.stdout)
     except subprocess.CalledProcessError as e:
