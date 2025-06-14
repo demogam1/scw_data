@@ -3,11 +3,32 @@
 import subprocess
 import json
 import os
+import sys
 from typing import Dict, List
 from dotenv import load_dotenv
 
 # Load environment variables from .env file
 load_dotenv()
+
+def validate_environment():
+    """
+    Validate that all required environment variables are present
+    """
+    required_vars = [
+        'SCW_ACCESS_KEY',
+        'SCW_SECRET_KEY',
+        'SCW_DEFAULT_PROJECT_ID',
+        'SCW_DEFAULT_REGION'
+    ]
+    
+    missing_vars = [var for var in required_vars if not os.getenv(var)]
+    
+    if missing_vars:
+        print("Error: Missing required environment variables:")
+        for var in missing_vars:
+            print(f"- {var}")
+        print("\nPlease ensure these variables are set in your .env file")
+        sys.exit(1)
 
 def run_scw_command(command: List[str]) -> Dict:
     """
@@ -16,10 +37,10 @@ def run_scw_command(command: List[str]) -> Dict:
     # Add environment variables to the command
     env = os.environ.copy()
     env.update({
-        'SCW_ACCESS_KEY': os.getenv('SCW_ACCESS_KEY'),
-        'SCW_SECRET_KEY': os.getenv('SCW_SECRET_KEY'),
-        'SCW_DEFAULT_PROJECT_ID': os.getenv('SCW_DEFAULT_PROJECT_ID'),
-        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_REGION')
+        'SCW_ACCESS_KEY': os.getenv('SCW_ACCESS_KEY', ''),
+        'SCW_SECRET_KEY': os.getenv('SCW_SECRET_KEY', ''),
+        'SCW_DEFAULT_PROJECT_ID': os.getenv('SCW_DEFAULT_PROJECT_ID', ''),
+        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_REGION', '')
     })
 
     try:
@@ -52,6 +73,9 @@ def get_security_groups() -> List[Dict]:
     return run_scw_command(["scw", "instance", "security-group", "list", "-o", "json"])
 
 def main():
+    # Validate environment variables first
+    validate_environment()
+    
     # Get instances
     instances = get_instances()
     if not instances:
