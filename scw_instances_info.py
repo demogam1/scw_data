@@ -18,7 +18,7 @@ def validate_environment():
         'SCW_ACCESS_KEY',
         'SCW_SECRET_KEY',
         'SCW_DEFAULT_PROJECT_ID',
-        'SCW_DEFAULT_REGION'
+        'SCW_DEFAULT_ORGANIZATION_ID'
     ]
     
     missing_vars = [var for var in required_vars if not os.getenv(var)]
@@ -40,7 +40,7 @@ def run_scw_command(command: List[str]) -> Dict:
         'SCW_ACCESS_KEY': os.getenv('SCW_ACCESS_KEY', ''),
         'SCW_SECRET_KEY': os.getenv('SCW_SECRET_KEY', ''),
         'SCW_DEFAULT_PROJECT_ID': os.getenv('SCW_DEFAULT_PROJECT_ID', ''),
-        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_REGION', '')
+        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_ORGANIZATION_ID', '')
     })
 
     try:
