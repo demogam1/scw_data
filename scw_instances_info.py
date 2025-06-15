@@ -78,7 +78,7 @@ def get_instances() -> List[Dict]:
     """
     return run_scw_command([
         "scw", "instance", "server", "list",
-        "--zone", os.getenv('SCW_DEFAULT_REGION', ''),
+        "--region", os.getenv('SCW_DEFAULT_REGION', ''),
         "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
     ])
 
@@ -88,7 +88,7 @@ def get_security_groups() -> List[Dict]:
     """
     return run_scw_command([
         "scw", "instance", "security-group", "list",
-        "--zone", os.getenv('SCW_DEFAULT_REGION', ''),
+        "--region", os.getenv('SCW_DEFAULT_REGION', ''),
         "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
     ])
 
