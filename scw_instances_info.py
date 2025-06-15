@@ -46,6 +46,10 @@ def run_scw_command(command: List[str]) -> Dict:
     })
 
     try:
+        # Add the --output json flag to ensure JSON output
+        if '-o' not in command and '--output' not in command:
+            command.extend(['--output', 'json'])
+            
         result = subprocess.run(
             command,
             capture_output=True,
@@ -53,6 +57,11 @@ def run_scw_command(command: List[str]) -> Dict:
             check=True,
             env=env
         )
+        
+        # Handle empty output
+        if not result.stdout.strip():
+            return {}
+            
         return json.loads(result.stdout)
     except subprocess.CalledProcessError as e:
         print(f"Error executing command: {e}")
@@ -60,19 +69,28 @@ def run_scw_command(command: List[str]) -> Dict:
         return {}
     except json.JSONDecodeError as e:
         print(f"Error parsing JSON output: {e}")
+        print(f"Raw output: {result.stdout}")
         return {}
 
 def get_instances() -> List[Dict]:
     """
     Get all instances information
     """
-    return run_scw_command(["scw", "instance", "server", "list", "-o", "json"])
+    return run_scw_command([
+        "scw", "instance", "server", "list",
+        "--zone", os.getenv('SCW_DEFAULT_REGION', ''),
+        "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
+    ])
 
 def get_security_groups() -> List[Dict]:
     """
     Get all security groups information
     """
-    return run_scw_command(["scw", "instance", "security-group", "list", "-o", "json"])
+    return run_scw_command([
+        "scw", "instance", "security-group", "list",
+        "--zone", os.getenv('SCW_DEFAULT_REGION', ''),
+        "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
+    ])
 
 def main():
     # Validate environment variables first
