@@ -1,5 +1,3 @@
-Here's a clean and informative `README.md` for your security group export script:
-
 ---
 
 ````markdown
@@ -114,19 +112,5 @@ rm security_group_rules.xlsx
 
 ---
 
-## 📄 License
+## 📄 Adrasys
 
-MIT
-
----
-
-## 🤝 Contributions
-
-PRs and suggestions welcome!
-
-```
-
----
-
-Let me know if you'd like a badge (`Made with Python`, etc.), Docker instructions, or a CLI wrapper (`argparse`) added to this project.
-```
