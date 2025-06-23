@@ -1,26 +1,26 @@
 ---
 
 ````markdown
-# 🔐 Scaleway Security Group Exporter
+# 🔐 Scaleway Security Group Rule Exporter
 
-This Python script retrieves **Scaleway instance security groups and their rules**, then exports them into a structured **Excel file** — with **one sheet per security group** for clarity.
+A Python tool that connects to your **Scaleway account**, retrieves all **security groups and their rules**, and exports the data into a structured **Excel file** — with one worksheet per security group for clarity and simplicity.
 
 ---
 
 ## 📦 Features
 
-- ✅ Validates Scaleway CLI is installed and initialized
-- ✅ Retrieves all security group IDs and names
-- ✅ Fetches **all rules** per security group (inbound & outbound)
-- ✅ Exports rules to `security_group_rules.xlsx`
-- ✅ One Excel **sheet per security group**
+- ✅ Validates that **Scaleway CLI** is installed and initialized
+- ✅ Lists all security groups for your account
+- ✅ Retrieves all **inbound/outbound rules** for each group
+- ✅ Exports data to an Excel file: `security_group_rules.xlsx`
+- ✅ Creates one **sheet per security group**
 
 ---
 
-## 🚀 Requirements
+## 🧰 Requirements
 
-- Python 3.7+
-- Scaleway CLI (`scw`) installed and configured via `scw init`
+- Python **3.7+**
+- Scaleway CLI (`scw`) installed and initialized
 - Python packages:
   ```bash
   pip install pandas openpyxl
@@ -28,73 +28,94 @@ This Python script retrieves **Scaleway instance security groups and their rules
 
 ---
 
-## 🛠 Setup
+## 🧱 Installation
 
 ### 1. Install Scaleway CLI
 
-Follow the instructions:
-[https://www.scaleway.com/en/docs/cli/install/](https://www.scaleway.com/en/docs/cli/install/)
+👉 Official install guide: [Scaleway CLI Docs](https://www.scaleway.com/en/docs/cli/install/)
 
-Or via script:
+Or run:
 
 ```bash
 curl -sL https://install.scaleway.com | bash
 ```
 
-### 2. Initialize CLI
+### 2. Authenticate with Scaleway
 
 ```bash
 scw init
 ```
 
-Make sure it sets:
+You’ll be prompted for:
+
+* Access key
+* Secret key
+* Project ID
+* Region/zone
+
+Then confirm everything is correctly configured:
+
+```bash
+scw info
+```
+
+You must **not** see any `-` values for:
 
 * `access_key`
 * `secret_key`
 * `default_project_id`
 * `default_organization_id`
 
-You can verify with:
-
-```bash
-scw info
-```
-
 ---
 
-## 📜 Usage
+## 🚀 Usage
+
+Run the script from the root of the project:
 
 ```bash
 python export_sg_rules.py
 ```
 
-If everything is configured correctly, you'll get:
+If the CLI is properly initialized and permissions are correct, the script will generate:
 
-```bash
+```
 ✅ Exported to: /absolute/path/security_group_rules.xlsx
 ```
 
 ---
 
-## 🧾 Output Format
+## 📁 Output
 
-* File: `security_group_rules.xlsx`
-* Each **sheet** represents a single security group
-* Columns include:
+### 🔸 File: `security_group_rules.xlsx`
 
-  * ID
-  * Direction
-  * Protocol
-  * Action
-  * IP Range
-  * Port From
-  * Port To
+* Each **worksheet = 1 security group**
+* Columns included:
+
+  * `ID`
+  * `Direction`
+  * `Protocol`
+  * `Action`
+  * `IP Range`
+  * `Port From`
+  * `Port To`
+
+Perfect for auditing, documentation, or visual review.
 
 ---
 
-## 🧹 Cleanup (optional)
+## ❌ Troubleshooting
 
-To remove old output:
+| Issue                    | Fix                                |
+| ------------------------ | ---------------------------------- |
+| `scw: command not found` | Install Scaleway CLI               |
+| `Missing credentials`    | Run `scw init` again               |
+| Excel file not created   | Check for permission or CLI errors |
+
+---
+
+## 🧹 Cleanup
+
+Remove the generated file:
 
 ```bash
 rm security_group_rules.xlsx
@@ -102,15 +123,6 @@ rm security_group_rules.xlsx
 
 ---
 
-## ❓ Troubleshooting
-
-* ❌ **Missing `scw` command**:
-  → Install the CLI via instructions above.
-
-* ❌ **Missing credentials**:
-  → Run `scw init` and ensure `scw info` shows your credentials properly.
+## 🪪 Adrasys
 
 ---
-
-## 📄 Adrasys
-
