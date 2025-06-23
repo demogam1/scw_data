@@ -1,4 +1,3 @@
----
 
 ````markdown
 # 🔐 Scaleway Security Group Rule Exporter
@@ -124,5 +123,3 @@ rm security_group_rules.xlsx
 ---
 
 ## 🪪 Adrasys
-
----
