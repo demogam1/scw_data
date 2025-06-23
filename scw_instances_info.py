@@ -10,12 +10,30 @@ def check_requirements():
     if not shutil.which("scw"):
         print("❌ Scaleway CLI (scw) is not installed.")
         sys.exit(1)
-    
-    # Check if user is authenticated (by running a harmless command)
+
+    # Check if 'scw init' was completed by inspecting 'scw info'
     try:
-        subprocess.run(["scw", "whoami"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        result = subprocess.run(["scw", "info"], capture_output=True, text=True, check=True)
+        output = result.stdout
+
+        required_keys = [
+            "access_key", "secret_key",
+            "default_project_id", "default_organization_id"
+        ]
+
+        missing_keys = []
+        for key in required_keys:
+            match = re.search(rf"^{key}\s+-\s+", output, re.MULTILINE)
+            if match:
+                missing_keys.append(key)
+
+        if missing_keys:
+            print(f"❌ Missing credentials in `scw init`: {', '.join(missing_keys)}")
+            print("👉 Please run `scw init` and set up your profile.")
+            sys.exit(1)
+
     except subprocess.CalledProcessError:
-        print("❌ Scaleway CLI is not initialized. Run `scw init` first.")
+        print("❌ Failed to run `scw info`. Ensure the CLI works correctly.")
         sys.exit(1)
 
 def get_security_groups():
