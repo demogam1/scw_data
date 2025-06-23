@@ -1,142 +1,69 @@
-#!/usr/bin/env python3
-
 import subprocess
 import json
-import os
+import shutil
+import pandas as pd
 import sys
-from typing import Dict, List
-from dotenv import load_dotenv
+from pathlib import Path
 
-# Load environment variables from .env file
-load_dotenv()
-
-def validate_environment():
-    """
-    Validate that all required environment variables are present
-    """
-    required_vars = [
-        'SCW_ACCESS_KEY',
-        'SCW_SECRET_KEY',
-        'SCW_DEFAULT_PROJECT_ID',
-        'SCW_DEFAULT_REGION',
-        'SCW_DEFAULT_ORGANIZATION_ID'
-    ]
+def check_requirements():
+    # Check if 'scw' CLI is installed
+    if not shutil.which("scw"):
+        print("❌ Scaleway CLI (scw) is not installed.")
+        sys.exit(1)
     
-    missing_vars = [var for var in required_vars if not os.getenv(var)]
-    
-    if missing_vars:
-        print("Error: Missing required environment variables:")
-        for var in missing_vars:
-            print(f"- {var}")
-        print("\nPlease ensure these variables are set in your .env file")
+    # Check if user is authenticated (by running a harmless command)
+    try:
+        subprocess.run(["scw", "whoami"], check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+    except subprocess.CalledProcessError:
+        print("❌ Scaleway CLI is not initialized. Run `scw init` first.")
         sys.exit(1)
 
-def run_scw_command(command: List[str]) -> Dict:
-    """
-    Execute a Scaleway CLI command and return the JSON output
-    """
-    # Add environment variables to the command
-    env = os.environ.copy()
-    env.update({
-        'SCW_ACCESS_KEY': os.getenv('SCW_ACCESS_KEY', ''),
-        'SCW_SECRET_KEY': os.getenv('SCW_SECRET_KEY', ''),
-        'SCW_DEFAULT_PROJECT_ID': os.getenv('SCW_DEFAULT_PROJECT_ID', ''),
-        'SCW_DEFAULT_REGION': os.getenv('SCW_DEFAULT_REGION', ''),
-        'SCW_DEFAULT_ORGANIZATION_ID': os.getenv('SCW_DEFAULT_ORGANIZATION_ID', '')
-    })
+def get_security_groups():
+    result = subprocess.run(["scw", "instance", "security-group", "list", "-o", "json"], capture_output=True, text=True)
+    return json.loads(result.stdout)
 
-    try:
-        # Add the --output json flag to ensure JSON output
-        if '-o' not in command and '--output' not in command:
-            command.extend(['--output', 'json'])
-            
-        result = subprocess.run(
-            command,
-            capture_output=True,
-            text=True,
-            check=True,
-            env=env
-        )
-        
-        # Handle empty output
-        if not result.stdout.strip():
-            return {}
-            
-        return json.loads(result.stdout)
-    except subprocess.CalledProcessError as e:
-        print(f"Error executing command: {e}")
-        print(f"Error output: {e.stderr}")
-        return {}
-    except json.JSONDecodeError as e:
-        print(f"Error parsing JSON output: {e}")
-        print(f"Raw output: {result.stdout}")
-        return {}
+def get_rules_for_group(group_id):
+    result = subprocess.run(
+        ["scw", "instance", "security-group", "list-rules", f"security-group-id={group_id}", "-o", "json"],
+        capture_output=True,
+        text=True
+    )
+    return json.loads(result.stdout)
 
-def get_instances() -> List[Dict]:
-    """
-    Get all instances information
-    """
-    return run_scw_command([
-        "scw", "instance", "server", "list",
-        "--region", os.getenv('SCW_DEFAULT_REGION', ''),
-        "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
-    ])
+def export_to_excel(groups_data):
+    output_path = Path("security_group_rules.xlsx")
+    writer = pd.ExcelWriter(output_path, engine="openpyxl")
 
-def get_security_groups() -> List[Dict]:
-    """
-    Get all security groups information
-    """
-    return run_scw_command([
-        "scw", "instance", "security-group", "list",
-        "--region", os.getenv('SCW_DEFAULT_REGION', ''),
-        "--project-id", os.getenv('SCW_DEFAULT_PROJECT_ID', '')
-    ])
+    for group in groups_data:
+        group_name = group["name"] or group["id"]
+        group_id = group["id"]
+
+        rules = get_rules_for_group(group_id)
+        if not rules:
+            continue
+
+        df = pd.DataFrame(rules)
+        df.rename(columns={
+            "id": "ID",
+            "direction": "Direction",
+            "protocol": "Protocol",
+            "action": "Action",
+            "ip_range": "IP Range",
+            "dest_port_from": "Port From",
+            "dest_port_to": "Port To"
+        }, inplace=True)
+
+        # Truncate long sheet names (Excel limit: 31 chars)
+        safe_name = group_name[:31]
+        df.to_excel(writer, sheet_name=safe_name, index=False)
+
+    writer.close()
+    print(f"✅ Exported to: {output_path.absolute()}")
 
 def main():
-    # Validate environment variables first
-    validate_environment()
-    
-    # Get instances
-    instances = get_instances()
-    if not instances:
-        print("No instances found or error occurred")
-        return
-
-    # Get security groups
-    security_groups = get_security_groups()
-    if not security_groups:
-        print("No security groups found or error occurred")
-        return
-
-    # Create a mapping of security group IDs to their rules
-    security_group_rules = {
-        sg["id"]: sg["rules"] for sg in security_groups
-    }
-
-    # Print information for each instance
-    print("\nInstance Information:")
-    print("-" * 50)
-    
-    for instance in instances:
-        print(f"\nInstance Name: {instance.get('name', 'N/A')}")
-        print(f"Instance ID: {instance.get('id', 'N/A')}")
-        print(f"Status: {instance.get('state', 'N/A')}")
-        
-        # Get security group information
-        security_group_id = instance.get("security_group", {}).get("id")
-        if security_group_id and security_group_id in security_group_rules:
-            print("\nFirewall Rules:")
-            for rule in security_group_rules[security_group_id]:
-                print(f"- Protocol: {rule.get('protocol', 'N/A')}")
-                print(f"  Direction: {rule.get('direction', 'N/A')}")
-                print(f"  Action: {rule.get('action', 'N/A')}")
-                print(f"  IP Range: {rule.get('ip_range', 'N/A')}")
-                print(f"  Port: {rule.get('dest_port_from', 'N/A')}-{rule.get('dest_port_to', 'N/A')}")
-                print()
-        else:
-            print("No firewall rules found for this instance")
-        
-        print("-" * 50)
+    check_requirements()
+    groups = get_security_groups()
+    export_to_excel(groups)
 
 if __name__ == "__main__":
-    main() 
+    main()
