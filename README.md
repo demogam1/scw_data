@@ -31,7 +31,7 @@ A Python tool that connects to your **Scaleway account**, retrieves all **securi
 
 ### 1. Install Scaleway CLI
 
-👉 Official install guide: [Scaleway CLI Docs](https://www.scaleway.com/en/docs/cli/install/)
+👉 Official install guide: [Scaleway CLI Docs](https://cli.scaleway.com/)
 
 Or run:
 
