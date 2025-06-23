@@ -4,6 +4,8 @@ import shutil
 import pandas as pd
 import sys
 from pathlib import Path
+import re
+
 
 def check_requirements():
     # Check if 'scw' CLI is installed
