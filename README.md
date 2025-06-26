@@ -116,15 +116,4 @@ One sheet named **"Servers"** with raw server details (all fields from the API).
 | `Permission denied` on write | Try running as sudo or in another folder |
 
 ---
-
-## 🧹 Cleanup
-
-To remove generated files:
-
-```bash
-rm *.json scaleway_export.xlsx
-```
-
----
-
 ## 🪪 Adrasys
