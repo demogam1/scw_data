@@ -48,12 +48,12 @@ curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/g
 scw init
 ```
 
-Make sure `scw info` shows these values correctly:
+You will need the following credentials to set up the Scaleway CLI:
 
-* ✅ `access_key`
-* ✅ `secret_key`
-* ✅ `default_project_id`
-* ✅ `default_organization_id`
+- access_key
+- secret_key
+- default_organization_id
+
 
 ---
 
