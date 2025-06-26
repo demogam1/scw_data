@@ -34,12 +34,12 @@ This Python script connects to your **Scaleway account**, retrieves **security g
 
 ### 1. Install Scaleway CLI
 
-[Official Guide →](https://www.scaleway.com/en/docs/cli/install/)
+[Official Guide →](https://cli.scaleway.com/)
 
 Or via terminal:
 
 ```bash
-curl -sL https://install.scaleway.com | bash
+curl -s https://raw.githubusercontent.com/scaleway/scaleway-cli/master/scripts/get.sh | sh
 ```
 
 ### 2. Initialize the CLI
