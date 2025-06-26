@@ -1,19 +1,16 @@
 import subprocess
-import json
 import shutil
 import pandas as pd
+import json
 import sys
 from pathlib import Path
 import re
 
-
 def check_requirements():
-    # Check if 'scw' CLI is installed
     if not shutil.which("scw"):
         print("❌ Scaleway CLI (scw) is not installed.")
         sys.exit(1)
 
-    # Check if 'scw init' was completed by inspecting 'scw info'
     try:
         result = subprocess.run(["scw", "info"], capture_output=True, text=True, check=True)
         output = result.stdout
@@ -22,43 +19,38 @@ def check_requirements():
             "access_key", "secret_key",
             "default_project_id", "default_organization_id"
         ]
+        missing = [key for key in required_keys if re.search(rf"^{key}\s+-\s+", output, re.MULTILINE)]
 
-        missing_keys = []
-        for key in required_keys:
-            match = re.search(rf"^{key}\s+-\s+", output, re.MULTILINE)
-            if match:
-                missing_keys.append(key)
-
-        if missing_keys:
-            print(f"❌ Missing credentials in `scw init`: {', '.join(missing_keys)}")
-            print("👉 Please run `scw init` and set up your profile.")
+        if missing:
+            print(f"❌ Missing credentials in `scw init`: {', '.join(missing)}")
             sys.exit(1)
-
     except subprocess.CalledProcessError:
-        print("❌ Failed to run `scw info`. Ensure the CLI works correctly.")
+        print("❌ Failed to run `scw info`.")
         sys.exit(1)
 
 def get_security_groups():
-    result = subprocess.run(["scw", "instance", "security-group", "list", "-o", "json"], capture_output=True, text=True)
+    result = subprocess.run(["scw", "instance", "security-group", "list", "-o", "json"],
+                            capture_output=True, text=True)
     return json.loads(result.stdout)
 
 def get_rules_for_group(group_id):
     result = subprocess.run(
         ["scw", "instance", "security-group", "list-rules", f"security-group-id={group_id}", "-o", "json"],
-        capture_output=True,
-        text=True
+        capture_output=True, text=True
     )
     return json.loads(result.stdout)
 
-def export_to_excel(groups_data):
-    output_path = Path("security_group_rules.xlsx")
-    writer = pd.ExcelWriter(output_path, engine="openpyxl")
+def get_servers():
+    result = subprocess.run(["scw", "instance", "server", "list", "-o", "json"],
+                            capture_output=True, text=True)
+    return json.loads(result.stdout)
 
+def export_security_groups_to_excel(groups_data, writer):
     for group in groups_data:
         group_name = group["name"] or group["id"]
         group_id = group["id"]
-
         rules = get_rules_for_group(group_id)
+
         if not rules:
             continue
 
@@ -73,17 +65,66 @@ def export_to_excel(groups_data):
             "dest_port_to": "Port To"
         }, inplace=True)
 
-        # Truncate long sheet names (Excel limit: 31 chars)
-        safe_name = group_name[:31]
-        df.to_excel(writer, sheet_name=safe_name, index=False)
+        sheet_name = group_name[:31]  # Excel limit
+        df.to_excel(writer, sheet_name=sheet_name, index=False)
 
-    writer.close()
-    print(f"✅ Exported to: {output_path.absolute()}")
+def export_servers_to_excel(servers_data, writer):
+    df = pd.DataFrame(servers_data)
+    df.to_excel(writer, sheet_name="Servers", index=False)
+
+def export_to_json(data, filename):
+    output_path = Path(filename)
+    with open(output_path, "w") as f:
+        json.dump(data, f, indent=4)
+    print(f"✅ JSON exported to: {output_path.resolve()}")
+
+def export_selected_data(output_excel, output_json, export_sg, export_sv):
+    if output_excel:
+        writer = pd.ExcelWriter("scaleway_export.xlsx", engine="openpyxl")
+    
+    if export_sg:
+        security_groups = get_security_groups()
+        if output_excel:
+            export_security_groups_to_excel(security_groups, writer)
+        if output_json:
+            export_to_json(security_groups, "security_groups.json")
+    
+    if export_sv:
+        servers = get_servers()
+        if output_excel:
+            export_servers_to_excel(servers, writer)
+        if output_json:
+            export_to_json(servers, "servers.json")
+
+    if output_excel:
+        writer.close()
+        print(f"✅ Excel exported to: {Path('scaleway_export.xlsx').resolve()}")
+
+def prompt_user():
+    print("What do you want to export?")
+    print("1. Security Groups")
+    print("2. Servers")
+    print("3. Both")
+    choice = input("Enter choice [1/2/3]: ").strip()
+
+    export_sg = choice in ("1", "3")
+    export_sv = choice in ("2", "3")
+
+    print("\nChoose output format:")
+    print("1. Excel")
+    print("2. JSON")
+    print("3. Both")
+    fmt = input("Enter format [1/2/3]: ").strip()
+
+    output_excel = fmt in ("1", "3")
+    output_json = fmt in ("2", "3")
+
+    return output_excel, output_json, export_sg, export_sv
 
 def main():
     check_requirements()
-    groups = get_security_groups()
-    export_to_excel(groups)
+    output_excel, output_json, export_sg, export_sv = prompt_user()
+    export_selected_data(output_excel, output_json, export_sg, export_sv)
 
 if __name__ == "__main__":
     main()
