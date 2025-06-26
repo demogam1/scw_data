@@ -1,123 +1,128 @@
+---
+# 🔐 Scaleway Exporter — Security Groups & Servers
 
-````markdown
-# 🔐 Scaleway Security Group Rule Exporter
-
-A Python tool that connects to your **Scaleway account**, retrieves all **security groups and their rules**, and exports the data into a structured **Excel file** — with one worksheet per security group for clarity and simplicity.
+This Python script connects to your **Scaleway account**, retrieves **security groups** and/or **instance servers**, and exports the data in **Excel and/or JSON format** — depending on your choice.
 
 ---
 
 ## 📦 Features
 
-- ✅ Validates that **Scaleway CLI** is installed and initialized
-- ✅ Lists all security groups for your account
-- ✅ Retrieves all **inbound/outbound rules** for each group
-- ✅ Exports data to an Excel file: `security_group_rules.xlsx`
-- ✅ Creates one **sheet per security group**
+- ✅ Checks if **Scaleway CLI** is installed and initialized
+- ✅ Lets you choose what to export:
+  - 🔹 Security Groups (with rules)
+  - 🔹 Servers
+  - 🔹 Both
+- ✅ Lets you choose output format(s):
+  - 📊 Excel (`.xlsx`)
+  - 🧾 JSON (`.json`)
+- ✅ Clean Excel structure:
+  - One sheet per security group
+  - One sheet for all servers
+- ✅ Easy to run, no config file needed
 
 ---
 
 ## 🧰 Requirements
 
 - Python **3.7+**
-- Scaleway CLI (`scw`) installed and initialized
-- Python packages:
-  ```bash
-  pip install pandas openpyxl
-````
+- Scaleway CLI (`scw`) installed and configured
+- Python dependencies -> requirements.txt
 
 ---
 
-## 🧱 Installation
+## ⚙️ Setup
 
 ### 1. Install Scaleway CLI
 
-👉 Official install guide: [Scaleway CLI Docs](https://cli.scaleway.com/)
+[Official Guide →](https://www.scaleway.com/en/docs/cli/install/)
 
-Or run:
+Or via terminal:
 
 ```bash
 curl -sL https://install.scaleway.com | bash
 ```
 
-### 2. Authenticate with Scaleway
+### 2. Initialize the CLI
 
 ```bash
 scw init
 ```
 
-You’ll be prompted for:
+Make sure `scw info` shows these values correctly:
 
-* Access key
-* Secret key
-* Project ID
-* Region/zone
-
-Then confirm everything is correctly configured:
-
-```bash
-scw info
-```
-
-You must **not** see any `-` values for:
-
-* `access_key`
-* `secret_key`
-* `default_project_id`
-* `default_organization_id`
+* ✅ `access_key`
+* ✅ `secret_key`
+* ✅ `default_project_id`
+* ✅ `default_organization_id`
 
 ---
 
 ## 🚀 Usage
 
-Run the script from the root of the project:
+Simply run the script:
 
 ```bash
-python export_sg_rules.py
+python export_scaleway_data.py
 ```
 
-If the CLI is properly initialized and permissions are correct, the script will generate:
+You’ll be prompted to choose:
 
-```
-✅ Exported to: /absolute/path/security_group_rules.xlsx
-```
+1. What you want to export:
+
+   ```
+   1. Security Groups
+   2. Servers
+   3. Both
+   ```
+
+2. In which format:
+
+   ```
+   1. Excel
+   2. JSON
+   3. Both
+   ```
+
+### 📂 Example output files:
+
+* `scaleway_export.xlsx`
+* `security_groups.json`
+* `servers.json`
 
 ---
 
-## 📁 Output
+## 📁 Excel Export Format
 
-### 🔸 File: `security_group_rules.xlsx`
+### 🔹 Security Group Sheets
 
-* Each **worksheet = 1 security group**
-* Columns included:
+Each security group gets its **own sheet** with the following columns:
 
-  * `ID`
-  * `Direction`
-  * `Protocol`
-  * `Action`
-  * `IP Range`
-  * `Port From`
-  * `Port To`
+| ID | Direction | Protocol | Action | IP Range | Port From | Port To |
+| -- | --------- | -------- | ------ | -------- | --------- | ------- |
 
-Perfect for auditing, documentation, or visual review.
+### 🔹 Servers Sheet
+
+One sheet named **"Servers"** with raw server details (all fields from the API).
 
 ---
 
 ## ❌ Troubleshooting
 
-| Issue                    | Fix                                |
-| ------------------------ | ---------------------------------- |
-| `scw: command not found` | Install Scaleway CLI               |
-| `Missing credentials`    | Run `scw init` again               |
-| Excel file not created   | Check for permission or CLI errors |
+| Problem                      | Solution                                 |
+| ---------------------------- | ---------------------------------------- |
+| `scw: command not found`     | Install the Scaleway CLI                 |
+| `Missing credentials` error  | Run `scw init` again                     |
+| Empty Excel/JSON             | Check if resources exist                 |
+| `Permission denied` on write | Try running as sudo or in another folder |
 
 ---
 
 ## 🧹 Cleanup
 
-Remove the generated file:
+To remove generated files:
 
 ```bash
-rm security_group_rules.xlsx
+rm *.json scaleway_export.xlsx
 ```
 
 ---
