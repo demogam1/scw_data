@@ -32,7 +32,7 @@ This Python script connects to your **Scaleway account**, retrieves **security g
 
 ## ⚙️ Setup
 
-### 1. Install Scaleway CLI
+### 1. Install Scaleway CLI(Linux)
 
 [Official Guide →](https://cli.scaleway.com/)
 
