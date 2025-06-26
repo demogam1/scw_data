@@ -69,13 +69,41 @@ def export_security_groups_to_excel(groups_data, writer):
         df.to_excel(writer, sheet_name=sheet_name, index=False)
 
 def export_servers_to_excel(servers_data, writer):
-    df = pd.DataFrame(servers_data)
+    export_rows = []
+
+    for srv in servers_data:
+        public_ips = srv.get("public_ips", [])
+        ipv4 = next((ip["address"] for ip in public_ips if ip.get("family") == "inet"), "")
+        ipv6 = next((ip["address"] for ip in public_ips if ip.get("family") == "inet6"), "")
+
+        export_rows.append({
+            "ID": srv.get("id"),
+            "Name": srv.get("name"),
+            "State": srv.get("state"),
+            "Zone": srv.get("zone"),
+            "Type": srv.get("commercial_type"),
+            "IPv4": ipv4,
+            "IPv6": ipv6,
+            "Created At": srv.get("creation_date"),
+            "Image": srv.get("image", {}).get("name"),
+            "Security Group": srv.get("security_group", {}).get("name"),
+        })
+
+    df = pd.DataFrame(export_rows)
     df.to_excel(writer, sheet_name="Servers", index=False)
 
 def export_to_json(data, filename):
+    # Enrichissement pour les serveurs
+    if filename == "servers.json":
+        for srv in data:
+            public_ips = srv.get("public_ips", [])
+            srv["ipv4"] = next((ip["address"] for ip in public_ips if ip.get("family") == "inet"), "")
+            srv["ipv6"] = next((ip["address"] for ip in public_ips if ip.get("family") == "inet6"), "")
+
     output_path = Path(filename)
     with open(output_path, "w") as f:
         json.dump(data, f, indent=4)
+
     print(f"✅ JSON exported to: {output_path.resolve()}")
 
 def export_selected_data(output_excel, output_json, export_sg, export_sv):
